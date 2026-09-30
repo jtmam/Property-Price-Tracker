@@ -12,8 +12,8 @@
   },
   "macro_store": {
     "counts": {
-      "baseline": true,
-      "new": 691,
+      "baseline": false,
+      "new": 0,
       "revised": 0,
       "rows": 691
     },
@@ -64,8 +64,8 @@
   },
   "vgv": {
     "counts": {
-      "baseline": true,
-      "new": 64,
+      "baseline": false,
+      "new": 0,
       "revised": 0,
       "rows": 64
     },
