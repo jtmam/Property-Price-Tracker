@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Highett Area House Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&display=swap">
+<style>
+/* Layout: one column of stacked bands, summary first (suburb tiles, what changed), then charts two-up on wide screens, then context. */
+:root {
+  --bg: #eef1f3;            /* bluestone-tinted page plane */
+  --surface: #fcfcfb;       /* chart surface (palette validated against this) */
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --axis-text: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --line: rgba(11, 11, 11, 0.10);
+  --accent: #33495b;        /* bluestone */
+  --accent-soft: #e2e8ed;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --neutral-series: #33495b;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
+  --font-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1012; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --axis-text: #898781;
+    --grid: #2c2c2a; --axis: #383835; --line: rgba(255, 255, 255, 0.10);
+    --accent: #a9bdcc; --accent-soft: #222a31;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --neutral-series: #a9bdcc;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1012; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --axis-text: #898781;
+  --grid: #2c2c2a; --axis: #383835; --line: rgba(255, 255, 255, 0.10);
+  --accent: #a9bdcc; --accent-soft: #222a31;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --neutral-series: #a9bdcc;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); -webkit-text-size-adjust: 100%; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, [tabindex]:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.page { max-width: 1160px; margin: 0 auto; padding-inline: 16px; padding-block: 24px 48px; display: grid; gap: 32px; }
+@media (min-width: 760px) { .page { padding-inline: 32px; } }
+.top { display: grid; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.eyebrow { font: 500 13px/1 var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); margin: 0; }
+h1 { font: 600 clamp(30px, 5vw, 44px)/1.02 var(--font-display); margin: 0; text-wrap: balance; }
+.brief { margin: 0; color: var(--ink-2); max-width: 70ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; line-height: 1; padding: 6px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
+.chip b { color: var(--ink); font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.state-ok .dot { background: var(--good); }
+.state-partial .dot { background: var(--warn); }
+.state-error .dot { background: var(--crit); }
+.state-pending .dot { background: transparent; border: 1.5px solid var(--axis-text); }
+h2 { font: 600 22px/1.15 var(--font-display); margin: 0; letter-spacing: 0.01em; text-wrap: balance; }
+.section-head { display: grid; gap: 4px; margin-bottom: 14px; }
+.section-head p { margin: 0; color: var(--ink-2); font-size: 14px; max-width: 72ch; }
+.tiles { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.tile-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.tile-name .rank { margin-left: auto; font-weight: 400; font-size: 12.5px; color: var(--ink-2); }
+.key { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.tile-value { font-size: 30px; font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; }
+.tile-sub { font-size: 13px; color: var(--ink-2); }
+.tile-empty { font-size: 13.5px; color: var(--ink-2); }
+.read { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; max-width: 80ch; }
+.read p, .read ul { margin: 0; }
+.read ul { padding-left: 20px; display: grid; gap: 4px; }
+.changes { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.changes li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 14px; }
+.changes li:first-child { border-top: 0; }
+.changes time { color: var(--ink-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+.changes .was { color: var(--ink-2); }
+.grid2 { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 920px) { .grid2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; align-content: start; }
+.card h3 { font-size: 14.5px; font-weight: 600; margin: 0; }
+.card .note { font-size: 12.5px; color: var(--ink-2); margin: 0; }
+.multiples { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.figure { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.figure .v { font-size: 22px; font-weight: 600; }
+.figure .d { font-size: 12.5px; color: var(--ink-2); }
+.chart { position: relative; min-width: 0; width: 100%; }
+.chart > div { min-width: 0; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+.chart svg text { font-family: var(--font-body); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); margin: 2px 0 4px; padding: 0; list-style: none; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.lk { display: inline-block; width: 16px; height: 2px; border-radius: 1px; flex: none; }
+.tip { position: absolute; top: 0; pointer-events: none; background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; min-width: 150px; z-index: 3; display: grid; gap: 4px; }
+.tip .t { color: var(--ink-2); }
+.tip .r { display: flex; align-items: center; gap: 8px; }
+.tip .r b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tip .r span { color: var(--ink-2); }
+.tip .lk { width: 12px; }
+.empty { font-size: 13.5px; color: var(--ink-2); padding: 18px 0 14px; }
+.panel { background: var(--accent-soft); border-radius: 10px; padding: 16px 18px; display: grid; gap: 10px; }
+.panel p { margin: 0; max-width: 75ch; }
+.panel ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.watch { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+.watch .card { gap: 8px; padding-bottom: 14px; }
+.affects { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--ink-2); }
+.affects span { display: inline-flex; align-items: center; gap: 6px; }
+.watch p { margin: 0; font-size: 14px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+details summary { cursor: pointer; font-weight: 600; }
+details h3 { font-size: 14px; margin: 16px 0 6px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 600; color: var(--ink-2); }
+footer { color: var(--ink-2); font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 6px; }
+footer p { margin: 0; max-width: 90ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+
+<main class="page">
+  <header class="top">
+    <p class="eyebrow">Melbourne house hunt</p>
+    <h1>Highett Area House Watch</h1>
+    <p class="brief" id="brief"></p>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <section aria-labelledby="h-now">
+    <div class="section-head">
+      <h2 id="h-now">Where prices sit</h2>
+      <p id="now-note">Latest official median house price for each suburb, in your order of preference.</p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section aria-labelledby="h-read" id="read-section" hidden>
+    <div class="section-head">
+      <h2 id="h-read">This week's read</h2>
+      <p id="read-date"></p>
+    </div>
+    <div class="read" id="read"></div>
+  </section>
+
+  <section aria-labelledby="h-changes">
+    <div class="section-head">
+      <h2 id="h-changes">What changed</h2>
+      <p>New releases and revisions picked up by the daily check, newest first.</p>
+    </div>
+    <ul class="changes" id="changes"></ul>
+  </section>
+
+  <section aria-labelledby="h-sales">
+    <div class="section-head">
+      <h2 id="h-sales">Sale prices</h2>
+      <p>Valuer-General Victoria medians from settled sales. Official and complete, but published about six months after each quarter ends.</p>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Median house price by quarter</h3><p class="note">Recent quarters. Recent figures can be revised as late sales settle.</p><div id="c-quarterly"></div></div>
+      <div class="card"><h3>Median house price by year</h3><p class="note">Ten-year history.</p><div id="c-annual"></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-listings">
+    <div class="section-head">
+      <h2 id="h-listings">Listings, supply and demand</h2>
+      <p>The fast-moving signals: what's for sale now, how prices are guided, and how quickly homes sell.</p>
+    </div>
+    <div class="panel">
+      <div class="chips"><span class="chip state-pending"><span class="dot"></span><b>Not connected yet</b></span></div>
+      <p>Once a listings feed is connected (Domain's developer API, or saved-search email alerts), this section tracks for 3 and 4+ bedroom houses:</p>
+      <ul>
+        <li>Asking prices and every change to a price guide</li>
+        <li>New listings per week and total stock on the market</li>
+        <li>Days on market, auction clearance and results against the guide</li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-macro">
+    <div class="section-head">
+      <h2 id="h-macro">Rates and the economy</h2>
+      <p>The forces that set borrowing power and buyer confidence across Melbourne.</p>
+    </div>
+    <div class="multiples" id="macro"></div>
+  </section>
+
+  <section aria-labelledby="h-local">
+    <div class="section-head">
+      <h2 id="h-local">Local influences</h2>
+      <p>Rezoning and infrastructure that change supply and land values in your suburbs.</p>
+    </div>
+    <div class="watch" id="watch"></div>
+  </section>
+
+  <section aria-labelledby="h-tables">
+    <details>
+      <summary id="h-tables">Data tables</summary>
+      <div id="tables"></div>
+    </details>
+  </section>
+
+  <footer>
+    <p>Sources: <a href="https://www.land.vic.gov.au/valuations/resources-and-reports/property-sales-statistics">Valuer-General Victoria property sales statistics</a> (CC BY 4.0), <a href="https://www.rba.gov.au/statistics/tables/">Reserve Bank of Australia statistical tables</a>, <a href="https://www.abs.gov.au/about/data-services/application-programming-interfaces-apis/data-api-user-guide">ABS Data API</a> (CC BY 4.0).</p>
+    <p id="foot-note"></p>
+  </footer>
+</main>
+
+<script type="application/json" id="watch-data">{"target":"Houses, 3 and 4+ bedrooms","suburbs":[{"name":"Highett","color":"--s1"},{"name":"Hampton East","color":"--s2"},{"name":"Cheltenham","color":"--s3"},{"name":"Moorabbin","color":"--s4"}],"sales":{"quarterly":{"Highett":[],"Hampton East":[],"Cheltenham":[],"Moorabbin":[]},"annual":{"Highett":[],"Hampton East":[],"Cheltenham":[],"Moorabbin":[]}},"macro":[{"id":"cash_rate","label":"RBA cash rate target","decimals":2,"points":[]},{"id":"mortgage_rate","label":"Owner-occupier variable rate, new loans","decimals":2,"points":[]},{"id":"inflation","label":"Inflation, year-ended (CPI)","decimals":1,"points":[]},{"id":"unemployment_vic","label":"Unemployment rate, Victoria","decimals":1,"points":[]},{"id":"unemployment_au","label":"Unemployment rate, Australia","decimals":1,"points":[]},{"id":"housing_credit","label":"Housing credit growth, year-ended","decimals":1,"points":[]}],"changes":[],"status":[{"name":"Valuer-General","status":"pending"},{"name":"RBA","status":"pending"},{"name":"ABS","status":"pending"}],"watchlist":[{"title":"Moorabbin Activity Centre","affects":["Moorabbin","Hampton East"],"status":"Rezoned by Amendment GC252 (in force 11 April 2025). Townhouses and low-rise apartments are now allowed within about 800 m of the Nepean Hwy and South Rd core.","link":"https://yoursay.bayside.vic.gov.au/MoorabbinAC-review"},{"title":"SRL East, Cheltenham precinct","affects":["Cheltenham","Highett"],"status":"New station at Cheltenham (Southland). Precinct structure plan and rezoning slated for 2026; SRL East trains planned from 2035.","link":"https://bigbuild.vic.gov.au/library/suburban-rail-loop/fact-sheets/more-homes-and-jobs-for-cheltenham"},{"title":"Kingston and Bayside council planning","affects":["Highett","Cheltenham","Moorabbin","Hampton East"],"status":"Planning scheme amendments, major permit applications and council consultations.","link":"https://www.yourkingstonyoursay.com.au/"}],"data_last_changed":null,"commentary":null}</script>
+<script>
+(() => {
+  const D = JSON.parse(document.getElementById('watch-data').textContent);
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+  const h = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const s = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  const colorOf = {}; D.suburbs.forEach(x => { colorOf[x.name] = `var(${x.color})`; });
+  const ordinal = n => n + ((n % 100 >= 11 && n % 100 <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] || 'th');
+  const money = (v, full) => {
+    if (v == null) return '–';
+    if (full) return '$' + Math.round(v).toLocaleString('en-AU');
+    return v >= 1e6 ? '$' + (v / 1e6).toFixed(2).replace(/0$/, '').replace(/\.0$/, '') + 'M' : '$' + Math.round(v / 1e3) + 'k';
+  };
+  const tickMoney = v => v >= 1e6 ? '$' + (+(v / 1e6).toFixed(2)) + 'M' : '$' + Math.round(v / 1e3) + 'k';
+  const pct = (v, d) => v == null ? '–' : v.toFixed(d) + '%';
+  const dayFmt = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+  const longDay = iso => new Date(iso + 'T00:00:00').toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  /* ---------- header ---------- */
+  $('brief').textContent = `${D.target} · in order of preference: ${D.suburbs.map(x => x.name).join(', ')}.`;
+  const chips = $('chips');
+  const addChip = (state, label, value) => {
+    const c = h('span', `chip state-${state}`); c.appendChild(h('span', 'dot'));
+    c.appendChild(document.createTextNode(label + ' '));
+    if (value) c.appendChild(h('b', null, value));
+    chips.appendChild(c);
+  };
+  if (D.data_last_changed) addChip('ok', 'Data last changed', longDay(D.data_last_changed));
+  const words = { ok: 'ok', partial: 'partly failed', error: 'failed', pending: 'waiting for first run' };
+  for (const st of D.status) addChip(st.status, st.name, words[st.status] || st.status);
+
+  /* ---------- tiles ---------- */
+  const tiles = $('tiles');
+  D.suburbs.forEach((sub, i) => {
+    const t = h('article', 'tile');
+    const name = h('div', 'tile-name');
+    const key = h('span', 'key'); key.style.background = colorOf[sub.name];
+    name.append(key, h('span', null, sub.name), h('span', 'rank', `${ordinal(i + 1)} choice`));
+    t.appendChild(name);
+    const q = D.sales.quarterly[sub.name] || [], a = D.sales.annual[sub.name] || [];
+    const series = q.length ? q : a;
+    if (!series.length) {
+      t.appendChild(h('div', 'tile-empty', 'Waiting for the first data run.'));
+    } else {
+      const last = series[series.length - 1];
+      t.appendChild(h('div', 'tile-value', money(last[1])));
+      t.appendChild(h('div', 'tile-sub', `Median house · ${last[2]}${last[4] != null ? ` · ${last[4]} sales` : ''}`));
+      const yearAgo = series.find(p => Math.abs(p[0] - (last[0] - 1)) < 0.05);
+      const prev = yearAgo || series[series.length - 2];
+      if (prev && prev[1]) {
+        const ch = (last[1] / prev[1] - 1) * 100;
+        const arrow = Math.abs(ch) < 0.05 ? '●' : ch > 0 ? '▲' : '▼';
+        t.appendChild(h('div', 'tile-sub', `${arrow} ${Math.abs(ch).toFixed(1)}% on ${yearAgo ? 'a year earlier' : prev[2]}`));
+      }
+    }
+    tiles.appendChild(t);
+  });
+  const anyQ = Object.values(D.sales.quarterly).some(v => v.length);
+  if (!anyQ) $('now-note').textContent = 'Latest official median house price for each suburb, in your order of preference. Figures appear after the first data run.';
+
+  /* ---------- commentary (added to the private copy by the weekly Claude digest) ---------- */
+  if (D.commentary && D.commentary.blocks && D.commentary.blocks.length) {
+    $('read-section').hidden = false;
+    $('read-date').textContent = `Written ${longDay(D.commentary.date)}.`;
+    const box = $('read');
+    const inline = (parent, text) => {
+      const re = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g; let last = 0, m;
+      while ((m = re.exec(text))) {
+        parent.appendChild(document.createTextNode(text.slice(last, m.index)));
+        const a = h('a', null, m[1]); a.href = m[2]; a.rel = 'noopener'; a.target = '_blank'; parent.appendChild(a);
+        last = re.lastIndex;
+      }
+      parent.appendChild(document.createTextNode(text.slice(last)));
+    };
+    for (const b of D.commentary.blocks) {
+      if (b.type === 'list') { const ul = h('ul'); b.items.forEach(it => { const li = h('li'); inline(li, it); ul.appendChild(li); }); box.appendChild(ul); }
+      else { const p = h('p'); inline(p, b.text); box.appendChild(p); }
+    }
+  }
+
+  /* ---------- what changed ---------- */
+  const list = $('changes');
+  if (!D.changes.length) {
+    const li = h('li'); li.append(h('time', null, '–'), h('span', null, 'Nothing yet. The first data run records a baseline, and later runs list each new release here.'));
+    list.appendChild(li);
+  }
+  for (const c of D.changes) {
+    const li = h('li'); const time = h('time', null, dayFmt(c.date)); time.dateTime = c.date;
+    const body = h('span', null, c.text);
+    if (c.was) body.appendChild(h('span', 'was', ` (${c.was})`));
+    li.append(time, body); list.appendChild(li);
+  }
+
+  /* ---------- line chart ---------- */
+  function niceTicks(min, max, n) {
+    if (!(max > min)) { const pad = Math.abs(min) * 0.05 || 1; min -= pad; max += pad; }
+    const raw = (max - min) / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag;
+    const step = (f > 5 ? 10 : f > 2.5 ? 5 : f > 2 ? 2.5 : f > 1 ? 2 : 1) * mag;
+    const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step, ticks = [];
+    for (let v = lo; v <= hi + step / 2; v += step) ticks.push(+v.toFixed(10));
+    return { lo, hi, ticks };
+  }
+
+  function lineChart(host, opt) {
+    const series = opt.series.filter(x => x.points.length);
+    if (!series.length) { host.appendChild(h('p', 'empty', opt.empty || 'No data yet. This fills in after the first data run.')); return; }
+    const wrap = h('div', 'chart'); host.appendChild(wrap);
+    if (series.length > 1) {
+      const lg = h('ul', 'legend');
+      series.forEach(x => { const li = h('li'); const k = h('span', 'lk'); k.style.background = x.color; li.append(k, h('span', null, x.name)); lg.appendChild(li); });
+      wrap.appendChild(lg);
+    }
+    const box = h('div'); wrap.appendChild(box);
+    const tip = h('div', 'tip'); tip.hidden = true; wrap.appendChild(tip);
+    const H = opt.height || 230;
+    const xsAll = [...new Set(series.flatMap(x => x.points.map(p => p[0])))].sort((a, b) => a - b);
+    const labelAt = {}; series.forEach(x => x.points.forEach(p => { labelAt[p[0]] = [p[2], p[3]]; }));
+    let geom = null, idx = -1;
+
+    function draw() {
+      const W = Math.max(160, box.clientWidth || host.clientWidth || 320);
+      box.textContent = '';
+      const ys = series.flatMap(x => x.points.map(p => p[1]));
+      const yt = niceTicks(Math.min(...ys), Math.max(...ys), H < 180 ? 3 : 4);
+      const yLabelW = Math.max(...yt.ticks.map(t => opt.yTick(t).length)) * 6.6 + 12;
+      const direct = series.length > 1 && series.length <= 4;
+      const endW = direct ? Math.max(...series.map(x => x.name.length)) * 6.9 + 18 : 14;
+      const M = { l: yLabelW, r: endW, t: 10, b: 26 };
+      const iw = W - M.l - M.r, ih = H - M.t - M.b;
+      const x0 = xsAll[0], x1 = xsAll[xsAll.length - 1];
+      const X = x => xsAll.length === 1 ? M.l + iw / 2 : M.l + (x - x0) / (x1 - x0) * iw;
+      const Y = y => M.t + (1 - (y - yt.lo) / (yt.hi - yt.lo)) * ih;
+      const svg = s('svg', { width: W, height: H, viewBox: `0 0 ${W} ${H}`, role: 'img', tabindex: 0, 'aria-label': opt.label }, box);
+      for (const t of yt.ticks) {
+        const ln = s('line', { x1: M.l, x2: W - M.r, y1: Y(t), y2: Y(t) }, svg); ln.style.stroke = t === yt.lo ? 'var(--axis)' : 'var(--grid)'; ln.style.strokeWidth = 1;
+        const tx = s('text', { x: M.l - 8, y: Y(t) + 4, 'text-anchor': 'end', 'font-size': 11 }, svg); tx.style.fill = 'var(--axis-text)'; tx.textContent = opt.yTick(t);
+      }
+      // x ticks: each period when there are few, otherwise whole years
+      let xt;
+      if (xsAll.length <= 8) {
+        const every = Math.ceil(xsAll.length / Math.max(2, Math.floor(iw / 50)));
+        xt = xsAll.map((x, i) => [x, labelAt[x][1], i]).filter(v => (xsAll.length - 1 - v[2]) % every === 0);
+      }
+      else {
+        const y0 = Math.ceil(x0), y1 = Math.floor(x1), span = Math.max(1, y1 - y0);
+        const stepY = Math.max(1, Math.ceil(span / Math.max(2, Math.floor(iw / 56))));
+        xt = []; for (let y = y0; y <= y1; y += stepY) xt.push([y, String(y)]);
+      }
+      for (const [x, lab] of xt) {
+        const tx = s('text', { x: X(x), y: H - 8, 'text-anchor': 'middle', 'font-size': 11 }, svg); tx.style.fill = 'var(--axis-text)'; tx.textContent = lab;
+      }
+      for (const x of series) {
+        const pts = x.points;
+        const d = pts.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join('');
+        if (opt.area && series.length === 1 && pts.length > 1) {
+          const a = s('path', { d: `${d}L${X(pts[pts.length - 1][0]).toFixed(1)},${Y(yt.lo)}L${X(pts[0][0]).toFixed(1)},${Y(yt.lo)}Z` }, svg);
+          a.style.fill = x.color; a.style.fillOpacity = 0.1;
+        }
+        if (pts.length > 1) {
+          const p = s('path', { d, fill: 'none', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg); p.style.stroke = x.color;
+        }
+        const e = pts[pts.length - 1];
+        const c = s('circle', { cx: X(e[0]), cy: Y(e[1]), r: 4, 'stroke-width': 2 }, svg); c.style.fill = x.color; c.style.stroke = 'var(--surface)';
+      }
+      // direct end labels, dropped (legend + tooltip carry identity) when they would collide
+      if (direct) {
+        const ends = series.map(x => ({ x, y: Y(x.points[x.points.length - 1][1]) })).sort((a, b) => a.y - b.y);
+        const clear = ends.every((e, i) => i === 0 || e.y - ends[i - 1].y >= 13);
+        if (clear) for (const e of ends) {
+          const tx = s('text', { x: W - M.r + 10, y: e.y + 4, 'font-size': 11.5 }, svg); tx.style.fill = 'var(--ink-2)'; tx.textContent = e.x.name;
+        }
+      }
+      const cross = s('line', { y1: M.t, y2: H - M.b }, svg); cross.style.stroke = 'var(--axis-text)'; cross.style.strokeWidth = 1; cross.style.display = 'none';
+      const hits = s('g', {}, svg);
+      const hot = series.map(x => { const c = s('circle', { r: 4, 'stroke-width': 2 }, hits); c.style.fill = x.color; c.style.stroke = 'var(--surface)'; c.style.display = 'none'; return c; });
+      const hitArea = s('rect', { x: M.l - 8, y: 0, width: iw + 16, height: H, fill: 'transparent' }, svg);
+      geom = { X, Y, cross, hot, W };
+      const show = i => {
+        idx = Math.max(0, Math.min(xsAll.length - 1, i));
+        const xv = xsAll[idx], px = X(xv);
+        cross.setAttribute('x1', px); cross.setAttribute('x2', px); cross.style.display = '';
+        tip.textContent = ''; tip.appendChild(h('div', 't', labelAt[xv][0]));
+        series.forEach((x, k) => {
+          const p = x.points.find(q => Math.abs(q[0] - xv) < 1e-6);
+          if (!p) { hot[k].style.display = 'none'; return; }
+          hot[k].setAttribute('cx', px); hot[k].setAttribute('cy', Y(p[1])); hot[k].style.display = '';
+          const r = h('div', 'r'); const lk = h('span', 'lk'); lk.style.background = x.color;
+          r.append(lk, h('b', null, opt.yFmt(p[1])));
+          if (series.length > 1) r.appendChild(h('span', null, x.name));
+          if (opt.extra) { const ex = opt.extra(x, p); if (ex) r.appendChild(h('span', null, ex)); }
+          tip.appendChild(r);
+        });
+        tip.hidden = false;
+        const tw = tip.offsetWidth, left = px + 14 + tw > W ? px - 14 - tw : px + 14;
+        tip.style.left = Math.max(0, left) + 'px';
+        tip.style.top = (series.length > 1 ? 30 : 4) + 'px';
+      };
+      const hide = () => { tip.hidden = true; cross.style.display = 'none'; hot.forEach(c => { c.style.display = 'none'; }); idx = -1; };
+      const nearest = evt => {
+        const r = svg.getBoundingClientRect(), mx = (evt.clientX - r.left) * (W / r.width);
+        let best = 0; xsAll.forEach((x, i) => { if (Math.abs(X(x) - mx) < Math.abs(X(xsAll[best]) - mx)) best = i; });
+        return best;
+      };
+      hitArea.addEventListener('pointermove', e => show(nearest(e)));
+      hitArea.addEventListener('pointerdown', e => show(nearest(e)));
+      hitArea.addEventListener('pointerleave', hide);
+      svg.addEventListener('focus', () => show(xsAll.length - 1));
+      svg.addEventListener('blur', hide);
+      svg.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft') { show((idx < 0 ? xsAll.length : idx) - 1); e.preventDefault(); }
+        if (e.key === 'ArrowRight') { show(idx + 1); e.preventDefault(); }
+        if (e.key === 'Escape') hide();
+      });
+    }
+    draw();
+    let raf = 0, lastW = box.clientWidth;
+    new ResizeObserver(() => { if (box.clientWidth === lastW) return; lastW = box.clientWidth; cancelAnimationFrame(raf); raf = requestAnimationFrame(draw); }).observe(box);
+  }
+
+  /* ---------- sale price charts ---------- */
+  const salesSeries = kind => D.suburbs.map(x => ({ name: x.name, color: colorOf[x.name], points: D.sales[kind][x.name] || [] }));
+  const salesExtra = (x, p) => p[4] != null ? `${p[4]} sales` : '';
+  lineChart($('c-quarterly'), { series: salesSeries('quarterly'), yFmt: v => money(v, true), yTick: tickMoney, extra: salesExtra, label: 'Median house price by quarter for each suburb. Values are in the data tables below.' });
+  lineChart($('c-annual'), { series: salesSeries('annual'), yFmt: v => money(v, true), yTick: tickMoney, extra: salesExtra, label: 'Median house price by year for each suburb. Values are in the data tables below.' });
+
+  /* ---------- macro small multiples ---------- */
+  const macro = $('macro');
+  if (!D.macro.some(m => m.points.length)) macro.appendChild(h('p', 'empty', 'Rates and economic data appear after the first data run.'));
+  for (const m of D.macro) {
+    if (!m.points.length) continue;
+    const card = h('div', 'card'); card.appendChild(h('h3', null, m.label));
+    const last = m.points[m.points.length - 1];
+    const fig = h('div', 'figure'); fig.appendChild(h('span', 'v', pct(last[1], m.decimals)));
+    const ago = [...m.points].reverse().find(p => last[0] - p[0] >= 0.95);
+    let d = last[2];
+    if (ago) { const diff = last[1] - ago[1]; d += Math.abs(diff) < 0.005 ? ' · unchanged on a year earlier' : ` · ${diff > 0 ? '▲' : '▼'} ${Math.abs(diff).toFixed(2)} pts on a year earlier`; }
+    fig.appendChild(h('span', 'd', d)); card.appendChild(fig);
+    const c = h('div'); card.appendChild(c); macro.appendChild(card);
+    lineChart(c, { series: [{ name: m.label, color: 'var(--neutral-series)', points: m.points }], height: 140, area: true, yFmt: v => pct(v, m.decimals), yTick: v => (+v.toFixed(2)) + '%', label: `${m.label} over time. Latest ${pct(last[1], m.decimals)}.` });
+  }
+
+  /* ---------- local influences ---------- */
+  const watch = $('watch');
+  for (const w of D.watchlist) {
+    const card = h('article', 'card'); card.appendChild(h('h3', null, w.title));
+    const aff = h('div', 'affects');
+    (w.affects || []).forEach(n => { const sp = h('span'); const k = h('span', 'key'); k.style.background = colorOf[n] || 'var(--axis)'; sp.append(k, document.createTextNode(n)); aff.appendChild(sp); });
+    card.appendChild(aff); card.appendChild(h('p', null, w.status));
+    if (/^https?:\/\//.test(w.link || '')) { const a = h('a', null, 'Source'); a.href = w.link; a.target = '_blank'; a.rel = 'noopener'; const p = h('p'); p.appendChild(a); card.appendChild(p); }
+    watch.appendChild(card);
+  }
+
+  /* ---------- data tables ---------- */
+  const tables = $('tables');
+  const table = (title, head, rows) => {
+    tables.appendChild(h('h3', null, title));
+    const wrap = h('div', 'table-wrap'), t = h('table'), tr = h('tr');
+    head.forEach(x => tr.appendChild(h('th', null, x))); const th = h('thead'); th.appendChild(tr); t.appendChild(th);
+    const tb = h('tbody'); rows.forEach(r => { const row = h('tr'); r.forEach(x => row.appendChild(h('td', null, x))); tb.appendChild(row); }); t.appendChild(tb);
+    wrap.appendChild(t); tables.appendChild(wrap);
+  };
+  for (const kind of ['quarterly', 'annual']) {
+    const xs = [...new Set(D.suburbs.flatMap(x => (D.sales[kind][x.name] || []).map(p => p[0])))].sort((a, b) => a - b).slice(-12);
+    if (!xs.length) continue;
+    const lab = {}; D.suburbs.forEach(x => (D.sales[kind][x.name] || []).forEach(p => { lab[p[0]] = p[2]; }));
+    table(kind === 'quarterly' ? 'Median house price by quarter' : 'Median house price by year', ['Suburb', ...xs.map(x => lab[x])],
+      D.suburbs.map(x => [x.name, ...xs.map(v => { const p = (D.sales[kind][x.name] || []).find(q => q[0] === v); return p ? money(p[1], true) : '–'; })]));
+  }
+  const mrows = D.macro.filter(m => m.points.length).map(m => { const l = m.points[m.points.length - 1]; return [m.label, l[2], pct(l[1], m.decimals)]; });
+  if (mrows.length) table('Rates and economy, latest', ['Series', 'Period', 'Value'], mrows);
+  if (!tables.children.length) tables.appendChild(h('p', 'empty', 'Tables appear after the first data run.'));
+
+  $('foot-note').textContent = `Checked daily at about 6 am Melbourne time. ${D.target}.`;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+# Melbourne property watch — what to track and where the data comes from.
+# Edit this file (even in the GitHub web editor) to change suburbs or series.
+
+target:
+  property_type: house
+  bedrooms: [3, 4]            # 4 means "4 or more"
+
+suburbs:                      # in order of preference
+  - name: Highett
+    postcode: 3190
+    councils: [Kingston, Bayside]
+  - name: Hampton East
+    postcode: 3188            # shared with Hampton (pricier), so avoid postcode-level stats
+    councils: [Bayside]
+  - name: Cheltenham
+    postcode: 3192
+    councils: [Kingston, Bayside]
+  - name: Moorabbin
+    postcode: 3189
+    councils: [Kingston]
+
+# Local influences shown on the dashboard. The weekly commentary checks these for news.
+watchlist:
+  - title: Moorabbin Activity Centre
+    affects: [Moorabbin, Hampton East]
+    status: Rezoned by Amendment GC252 (in force 11 April 2025). Townhouses and low-rise apartments are now allowed within about 800 m of the Nepean Hwy and South Rd core.
+    link: https://yoursay.bayside.vic.gov.au/MoorabbinAC-review
+  - title: SRL East, Cheltenham precinct
+    affects: [Cheltenham, Highett]
+    status: New station at Cheltenham (Southland). Precinct structure plan and rezoning slated for 2026; SRL East trains planned from 2035.
+    link: https://bigbuild.vic.gov.au/library/suburban-rail-loop/fact-sheets/more-homes-and-jobs-for-cheltenham
+  - title: Kingston and Bayside council planning
+    affects: [Highett, Cheltenham, Moorabbin, Hampton East]
+    status: Planning scheme amendments, major permit applications and council consultations.
+    link: https://www.yourkingstonyoursay.com.au/
+
+sources:
+  # Valuer-General Victoria — official median sale prices by suburb (free, CC BY 4.0).
+  # Quarterly file lags ~6 months; the annual file gives a 10-year history.
+  vgv:
+    page: https://www.land.vic.gov.au/valuations/resources-and-reports/property-sales-statistics
+    files:
+      - id: quarterly
+        link_text: ["median house"]          # e.g. "Median house – March quarter 2026"
+      - id: annual
+        link_text: ["houses by suburb"]      # e.g. "Houses by suburb 2015-2025"
+
+  # Reserve Bank of Australia statistical tables (CSV). Columns are picked by title
+  # keywords so small wording changes by the RBA don't break the collector.
+  rba:
+    start: "2015-01-01"
+    series:
+      - id: cash_rate
+        label: RBA cash rate target
+        table: f1.1
+        include: ["cash rate target"]
+        units: "%"
+      - id: mortgage_rate
+        label: Owner-occupier variable rate, new loans
+        table: f6
+        include: ["owner", "variable"]
+        include_any: ["new"]
+        exclude: ["investor", "fixed", "interest-only", "outstanding"]
+        units: "%"
+      - id: inflation
+        label: Inflation, year-ended (CPI)
+        table: g1
+        include: ["year-ended", "inflation"]
+        exclude: ["trimmed", "weighted", "median", "excluding", "tradable", "seasonally", "underlying"]
+        units: "%"
+        decimals: 1
+      - id: unemployment_au
+        label: Unemployment rate, Australia
+        table: h5
+        include: ["unemployment rate"]
+        exclude: ["trend", "original"]
+        units: "%"
+        decimals: 1
+      - id: housing_credit
+        label: Housing credit growth, year-ended
+        table: d1
+        include: ["housing"]
+        include_any: ["twelve-month", "12-month", "year-ended"]
+        exclude: ["owner", "investor", "business", "personal"]
+        units: "%"
+        decimals: 1
+
+  # Australian Bureau of Statistics Data API (SDMX, free, no key needed).
+  abs:
+    series:
+      - id: unemployment_vic
+        label: Unemployment rate, Victoria
+        flow: ABS,LF
+        key: M13.3.1599.20.2.M      # unemployment rate · persons · 15+ · seasonally adjusted · Vic · monthly
+        start: "2015-01"
+        units: "%"
+        decimals: 1

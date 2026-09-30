@@ -1,0 +1,51 @@
+name: Market watch
+
+on:
+  schedule:
+    - cron: "17 20 * * *"   # daily at about 6:17 am AEST / 7:17 am AEDT
+  workflow_dispatch:         # "Run workflow" button in the Actions tab
+
+permissions:
+  contents: write            # lets the job commit new data back to the repo
+
+concurrency:
+  group: market-watch
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Collect data
+        run: python collect.py
+
+      - name: Build dashboard
+        run: python build_dashboard.py
+
+      - name: Save changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data docs dashboard/artifact.html
+          if git diff --cached --quiet; then
+            echo "No new data today."
+          else
+            git commit -m "Data update $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      # Runs last so partial data is still saved. A failed run emails you (GitHub's default).
+      - name: Flag failed sources
+        run: |
+          if [ -s .watch_failed ]; then
+            echo "::error::Failed sources: $(tr '\n' ' ' < .watch_failed). Details in data/_diagnostics.json"
+            exit 1
+          fi
