@@ -1,0 +1,97 @@
+{
+  "abs": {
+    "message": "",
+    "notes": {
+      "unemployment_vic": {
+        "flow": "ABS,LF",
+        "key": "M13.3.1599.20.2.M",
+        "observations": 140
+      }
+    },
+    "status": "ok"
+  },
+  "macro_store": {
+    "counts": {
+      "baseline": true,
+      "new": 691,
+      "revised": 0,
+      "rows": 691
+    },
+    "status": "ok"
+  },
+  "rba": {
+    "message": "",
+    "notes": {
+      "cash_rate": {
+        "also_matched": [],
+        "observations": 140,
+        "series_id": "FIRMMCRT",
+        "table": "f1.1",
+        "title": "Cash Rate Target"
+      },
+      "housing_credit": {
+        "also_matched": [],
+        "observations": 140,
+        "series_id": "DGFACH12",
+        "table": "d1",
+        "title": "Credit; Housing; 12-month ended growth"
+      },
+      "inflation": {
+        "also_matched": [],
+        "observations": 46,
+        "series_id": "GCPIAGYP",
+        "table": "g1",
+        "title": "Year-ended inflation"
+      },
+      "mortgage_rate": {
+        "also_matched": [
+          "Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; All institutions"
+        ],
+        "observations": 85,
+        "series_id": "FLRHOFVL",
+        "table": "f6",
+        "title": "Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; Large institutions"
+      },
+      "unemployment_au": {
+        "also_matched": [],
+        "observations": 140,
+        "series_id": "GLFSURSA",
+        "table": "h5",
+        "title": "Unemployment rate"
+      }
+    },
+    "status": "ok"
+  },
+  "vgv": {
+    "counts": {
+      "baseline": true,
+      "new": 64,
+      "revised": 0,
+      "rows": 64
+    },
+    "notes": {
+      "files": {
+        "annual": {
+          "link_text": "Houses by suburb 2015-2025 xlsx 134.7 KB",
+          "missing_suburbs": [],
+          "rows": 44,
+          "sheets_used": [
+            "Sheet1"
+          ],
+          "url": "https://www.land.vic.gov.au/__data/assets/excel_doc/0033/775617/houses-by-suburb-2015-2025.xlsx"
+        },
+        "quarterly": {
+          "link_text": "Median house \u2013 March quarter 2026 xls 255.0 KB",
+          "missing_suburbs": [],
+          "rows": 20,
+          "sheets_used": [
+            "Sheet1"
+          ],
+          "url": "https://www.land.vic.gov.au/__data/assets/excel_doc/0037/777961/median-house-march-quarter-2026.xls"
+        }
+      },
+      "missing": []
+    },
+    "status": "ok"
+  }
+}
