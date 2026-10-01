@@ -10,8 +10,9 @@ Claude only interprets it.
 
 - `.github/workflows/watch.yml` runs daily at 20:17 UTC (about 6:17 am AEST / 7:17 am AEDT) and on
   demand. It runs `collect.py`, then `build_dashboard.py`, and commits any changed `data/`, `docs/`
-  and `dashboard/artifact.html` as github-actions[bot]. A final step fails the job if any source
-  failed, which makes GitHub email the owner. Partial data is still committed.
+  and `dashboard/artifact.html` as github-actions[bot], pulling with rebase first so a push made
+  during the run doesn't reject it. A final step fails the job if any source failed, which makes
+  GitHub email the owner. Partial data is still committed.
 - Public dashboard: GitHub Pages from `main` `/docs`, at https://jtmam.github.io/Property-Price-Tracker/
 - Private dashboard with a weekly written read: Claude artifact
   https://claude.ai/artifact/Ay1vJJzRPFCRPv1HA23gvS. A Claude scheduled task in the Claude app,
@@ -102,8 +103,9 @@ rows of a dataset, or of a series added later, are logged as one `baseline` line
 - RBA table F1.1 is a monthly average, which lags and blends mid-month rate moves. The cash rate
   therefore comes from the daily table F1. The F6 mortgage rate should be the "All institutions"
   series.
-- Update 1 renamed two series. The old ids `cash_rate` and `mortgage_rate` stay in `data/macro.csv`
-  but are no longer shown. Leave them or prune them deliberately.
+- Update 1 renamed two series. The old ids `cash_rate` (F1.1 monthly average) and `mortgage_rate`
+  (F6 large institutions) were pruned from `data/macro.csv` on 1 October 2026; the new series cover
+  the same months.
 
 ## Status (30 September 2026)
 
