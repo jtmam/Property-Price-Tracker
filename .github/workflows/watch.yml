@@ -39,6 +39,7 @@ jobs:
             echo "No new data today."
           else
             git commit -m "Data update $(date -u +%Y-%m-%d)"
+            git pull --rebase          # take any commit pushed during the run; the bot only touches data and outputs
             git push
           fi
 
