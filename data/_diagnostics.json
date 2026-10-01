@@ -13,20 +13,22 @@
   "macro_store": {
     "counts": {
       "baseline": false,
-      "new": 0,
+      "new": 226,
       "revised": 0,
-      "rows": 691
+      "rows": 917
     },
     "status": "ok"
   },
   "rba": {
     "message": "",
     "notes": {
-      "cash_rate": {
-        "also_matched": [],
-        "observations": 140,
-        "series_id": "FIRMMCRT",
-        "table": "f1.1",
+      "cash_rate_target": {
+        "also_matched": [
+          "Change in the Cash Rate Target"
+        ],
+        "observations": 141,
+        "series_id": "FIRMMCRTD",
+        "table": "f1",
         "title": "Cash Rate Target"
       },
       "housing_credit": {
@@ -43,14 +45,12 @@
         "table": "g1",
         "title": "Year-ended inflation"
       },
-      "mortgage_rate": {
-        "also_matched": [
-          "Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; All institutions"
-        ],
+      "mortgage_rate_all": {
+        "also_matched": [],
         "observations": 85,
-        "series_id": "FLRHOFVL",
+        "series_id": "FLRHOFVA",
         "table": "f6",
-        "title": "Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; Large institutions"
+        "title": "Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; All institutions"
       },
       "unemployment_au": {
         "also_matched": [],
