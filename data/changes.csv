@@ -3,3 +3,4 @@ detected_on,dataset,series,period,old,new,kind
 2026-09-30,macro,all,,,691,baseline
 2026-10-01,macro,cash_rate_target,,,141,baseline
 2026-10-01,macro,mortgage_rate_all,,,85,baseline
+2026-10-01,macro,cash_rate_target,2026-10-31,,4.6,new

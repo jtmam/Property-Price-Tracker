@@ -13,9 +13,9 @@
   "macro_store": {
     "counts": {
       "baseline": false,
-      "new": 226,
+      "new": 1,
       "revised": 0,
-      "rows": 917
+      "rows": 693
     },
     "status": "ok"
   },
@@ -23,10 +23,8 @@
     "message": "",
     "notes": {
       "cash_rate_target": {
-        "also_matched": [
-          "Change in the Cash Rate Target"
-        ],
-        "observations": 141,
+        "also_matched": [],
+        "observations": 142,
         "series_id": "FIRMMCRTD",
         "table": "f1",
         "title": "Cash Rate Target"
