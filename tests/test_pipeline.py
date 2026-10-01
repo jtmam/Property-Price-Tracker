@@ -188,7 +188,7 @@ def main():
     keep = Path(sys.argv[sys.argv.index("--keep") + 1]) if "--keep" in sys.argv else None
     tmp = Path(tempfile.mkdtemp())
     run(1, tmp)
-    diag = json.loads((tmp / "data" / "_diagnostics.json").read_text())
+    diag = json.loads((tmp / "data" / "_diagnostics.json").read_text(encoding="utf-8"))
     assert all(diag[k]["status"] == "ok" for k in ("vgv", "rba", "abs")), diag
     assert diag["rba"]["notes"]["mortgage_rate_all"]["series_id"] == "FLRHOFVA", diag["rba"]["notes"]["mortgage_rate_all"]
     assert diag["rba"]["notes"]["cash_rate_target"]["series_id"] == "FIRMMCRTD"
@@ -227,9 +227,9 @@ def main():
     assert len(data["changes"]) >= 3 and data["status"][0]["status"] == "ok"
     texts = [c["text"] + " " + c["was"] for c in data["changes"]]
     assert any("RBA cash rate target, Sep 2026: 4.60%" in x and "was 3.60%" in x for x in texts), texts
-    html = (out / "docs" / "index.html").read_text()
+    html = (out / "docs" / "index.html").read_text(encoding="utf-8")
     assert html.startswith("<!doctype html>") and "__DATA__" not in html
-    frag = (out / "dashboard" / "artifact.html").read_text()
+    frag = (out / "dashboard" / "artifact.html").read_text(encoding="utf-8")
     assert frag.startswith("<title>") and "<body" not in frag
     if keep:
         shutil.copytree(tmp / "data", keep / "data", dirs_exist_ok=True)

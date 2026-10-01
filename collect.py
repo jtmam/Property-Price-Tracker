@@ -12,7 +12,7 @@ from watch.common import ROOT, upsert, write_diagnostics
 
 
 def main() -> None:
-    cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     src = cfg["sources"]
     suburbs = [s["name"] for s in cfg["suburbs"]]
     diag, failed = {}, []

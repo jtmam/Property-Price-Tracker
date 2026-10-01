@@ -50,7 +50,7 @@ def money(v) -> str:
 
 
 def parse_commentary(path: Path):
-    text = path.read_text().strip()
+    text = path.read_text(encoding="utf-8").strip()
     when = date.today().isoformat()
     if m := re.match(r"(?i)date:\s*(\d{4}-\d{2}-\d{2})\s*\n", text):
         when, text = m[1], text[m.end():]
@@ -119,7 +119,7 @@ def change_feed(ch: pd.DataFrame | None, macro_meta: dict, limit: int = 25) -> l
 
 
 def build(data_dir: Path, out_dir: Path, commentary: Path | None = None) -> dict:
-    cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     subs = [{"name": s["name"], "color": COLORS[i % len(COLORS)]} for i, s in enumerate(cfg["suburbs"])]
     tgt = cfg["target"]
     beds = sorted(tgt.get("bedrooms", []))
@@ -155,7 +155,7 @@ def build(data_dir: Path, out_dir: Path, commentary: Path | None = None) -> dict
 
     ch = read_csv(data_dir / "changes.csv")
     diag_path = data_dir / "_diagnostics.json"
-    diag = json.loads(diag_path.read_text()) if diag_path.exists() else {}
+    diag = json.loads(diag_path.read_text(encoding="utf-8")) if diag_path.exists() else {}
     data = {
         "target": target,
         "suburbs": subs,
@@ -168,7 +168,7 @@ def build(data_dir: Path, out_dir: Path, commentary: Path | None = None) -> dict
         "commentary": parse_commentary(commentary) if commentary else None,
     }
 
-    tpl = (ROOT / "dashboard" / "template.html").read_text()
+    tpl = (ROOT / "dashboard" / "template.html").read_text(encoding="utf-8")
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     head, body = tpl.replace("__DATA__", payload).split("<!--BODY-->", 1)
     (out_dir / "docs").mkdir(parents=True, exist_ok=True)
@@ -177,8 +177,8 @@ def build(data_dir: Path, out_dir: Path, commentary: Path | None = None) -> dict
     (out_dir / "docs" / "index.html").write_text(
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
-        f"{head}</head>\n<body>\n{body}</body>\n</html>\n")
-    (out_dir / "dashboard" / "artifact.html").write_text(head + body)
+        f"{head}</head>\n<body>\n{body}</body>\n</html>\n", encoding="utf-8")
+    (out_dir / "dashboard" / "artifact.html").write_text(head + body, encoding="utf-8")
     return data
 
 
