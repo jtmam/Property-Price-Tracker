@@ -24,7 +24,8 @@ ROOT = Path(__file__).resolve().parent
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 COLORS = ["--s1", "--s2", "--s3", "--s4"]
 SOURCES = {"vgv": "Valuer-General", "rba": "RBA", "abs": "ABS"}
-MACRO_ORDER = ["cash_rate", "mortgage_rate", "inflation", "unemployment_vic", "unemployment_au", "housing_credit"]
+MACRO_ORDER = ["cash_rate_target", "mortgage_rate_all", "inflation", "unemployment_vic", "unemployment_au",
+               "housing_credit"]
 
 
 def point(period: str):
@@ -90,7 +91,10 @@ def change_feed(ch: pd.DataFrame | None, macro_meta: dict, limit: int = 25) -> l
         day, dataset, series = k
         g = groups[k]
         for r in g["base"]:
-            what = "suburb sale prices" if dataset == "sales_medians" else "rates and economic data"
+            if series == "all":
+                what = "suburb sale prices" if dataset == "sales_medians" else "rates and economic data"
+            else:
+                what = name_value(dataset, series, 0)[0]
             items.append({"date": day, "text": f"Baseline collected: {r.new} records of {what}.", "was": ""})
         new = sorted(g["new"], key=lambda r: point(r.period)[0], reverse=True)
         if len(new) > 3:

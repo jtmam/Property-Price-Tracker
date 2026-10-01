@@ -220,7 +220,7 @@ footer p { margin: 0; max-width: 90ch; }
   const money = (v, full) => {
     if (v == null) return '–';
     if (full) return '$' + Math.round(v).toLocaleString('en-AU');
-    return v >= 1e6 ? '$' + (v / 1e6).toFixed(2).replace(/0$/, '').replace(/\.0$/, '') + 'M' : '$' + Math.round(v / 1e3) + 'k';
+    return v >= 1e6 ? '$' + (Math.round(v / 1e4) / 100).toFixed(2).replace(/0$/, '').replace(/\.0$/, '') + 'M' : '$' + Math.round(v / 1e3) + 'k';
   };
   const tickMoney = v => v >= 1e6 ? '$' + (+(v / 1e6).toFixed(2)) + 'M' : '$' + Math.round(v / 1e3) + 'k';
   const pct = (v, d) => v == null ? '–' : v.toFixed(d) + '%';
@@ -481,6 +481,6 @@ footer p { margin: 0; max-width: 90ch; }
   if (mrows.length) table('Rates and economy, latest', ['Series', 'Period', 'Value'], mrows);
   if (!tables.children.length) tables.appendChild(h('p', 'empty', 'Tables appear after the first data run.'));
 
-  $('foot-note').textContent = `Checked daily at about 6 am Melbourne time. ${D.target}.`;
+  $('foot-note').textContent = `Checked every morning, Melbourne time. ${D.target}.`;
 })();
 </script>

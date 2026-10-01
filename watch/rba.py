@@ -7,6 +7,7 @@ data/_diagnostics.json for checking.
 """
 from __future__ import annotations
 
+import calendar
 import csv
 import io
 from datetime import date, datetime
@@ -91,16 +92,24 @@ def collect(cfg: dict):
                 continue
             i = hits[0]
             ids = meta.get("Series ID", [])
-            n = 0
+            obs = []
             for d, r in data:
                 if d < start or i >= len(r) or not r[i].strip():
                     continue
                 try:
-                    v = float(r[i])
+                    obs.append((d, float(r[i])))
                 except ValueError:
                     continue
+            if spec.get("monthly_from_daily"):
+                # Last value in each month, stamped at month end. During the current month the
+                # point updates in place, so a rate decision shows as a change the next morning.
+                last = {}
+                for d, v in sorted(obs):
+                    last[(d.year, d.month)] = v
+                obs = [(date(y, m, calendar.monthrange(y, m)[1]), v) for (y, m), v in last.items()]
+            for d, v in obs:
                 rows.append({"series": sid, "period": d.isoformat(), "value": v})
-                n += 1
+            n = len(obs)
             notes[sid] = {"table": table, "title": meta["Title"][i],
                           "series_id": ids[i] if i < len(ids) else "",
                           "also_matched": [meta["Title"][j] for j in hits[1:4]], "observations": n}

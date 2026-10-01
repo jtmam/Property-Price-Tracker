@@ -27,8 +27,8 @@ watchlist:
     link: https://yoursay.bayside.vic.gov.au/MoorabbinAC-review
   - title: SRL East, Cheltenham precinct
     affects: [Cheltenham, Highett]
-    status: New station at Cheltenham (Southland). Precinct structure plan and rezoning slated for 2026; SRL East trains planned from 2035.
-    link: https://bigbuild.vic.gov.au/library/suburban-rail-loop/fact-sheets/more-homes-and-jobs-for-cheltenham
+    status: New station at Cheltenham (Southland), trains planned from 2035. Precinct rezoning (Amendment GC246) passed its advisory committee, whose report was released 1 July 2026; ministerial approval is the next step. The Clayton and Box Hill precinct controls took effect on 14 July 2026.
+    link: https://www.planningpanels.vic.gov.au/panels-and-committees/projects/suburban-rail-loop-east-precincts-standing-advisory-committee-cheltenham-precinct
   - title: Kingston and Bayside council planning
     affects: [Highett, Cheltenham, Moorabbin, Hampton East]
     status: Planning scheme amendments, major permit applications and council consultations.
@@ -50,15 +50,16 @@ sources:
   rba:
     start: "2015-01-01"
     series:
-      - id: cash_rate
+      - id: cash_rate_target
         label: RBA cash rate target
-        table: f1.1
+        table: f1                    # daily table, so a rate decision shows up the next morning
         include: ["cash rate target"]
+        monthly_from_daily: true     # keep the last value of each month
         units: "%"
-      - id: mortgage_rate
+      - id: mortgage_rate_all
         label: Owner-occupier variable rate, new loans
         table: f6
-        include: ["owner", "variable"]
+        include: ["owner", "variable", "all institutions"]
         include_any: ["new"]
         exclude: ["investor", "fixed", "interest-only", "outstanding"]
         units: "%"

@@ -46,8 +46,8 @@ def upsert(dataset: str, rows: list[dict], key_cols: list[str], value_cols: list
            series_col: str) -> dict:
     """Merge fresh rows into data/<dataset>.csv, keeping history the source no longer shows.
 
-    Logs new observations and revisions to data/changes.csv (skipped on the very first run,
-    which is treated as the baseline).
+    Logs new observations and revisions to data/changes.csv. The very first run, and the
+    first rows of any series added later, are logged as a single "baseline" line instead.
     """
     path = DATA / f"{dataset}.csv"
     cols = key_cols + value_cols
@@ -63,7 +63,8 @@ def upsert(dataset: str, rows: list[dict], key_cols: list[str], value_cols: list
             old[c] = ""
 
     old_idx = {tuple(r[k] for k in key_cols): r for r in old[cols].to_dict("records")}
-    changes, n_new, n_rev = [], 0, 0
+    known = set(old[series_col]) if series_col in old.columns else set()
+    changes, n_new, n_rev, added = [], 0, 0, {}
     today = date.today().isoformat()
     main_val = value_cols[0]
     for r in fresh.to_dict("records"):
@@ -71,6 +72,10 @@ def upsert(dataset: str, rows: list[dict], key_cols: list[str], value_cols: list
         prev = old_idx.get(k)
         if prev is None:
             n_new += 1
+            if not baseline and r[series_col] not in known:     # a series seen for the first time
+                added[r[series_col]] = added.get(r[series_col], 0) + 1
+                old_idx[k] = r
+                continue
             col, kind, before = main_val, "new", ""
         else:
             for c in value_cols:            # a blank in the fresh pull never erases history
@@ -94,6 +99,8 @@ def upsert(dataset: str, rows: list[dict], key_cols: list[str], value_cols: list
     if baseline:
         changes = [{"detected_on": today, "dataset": dataset, "series": "all", "period": "",
                     "old": "", "new": str(len(merged)), "kind": "baseline"}]
+    changes += [{"detected_on": today, "dataset": dataset, "series": s, "period": "",
+                 "old": "", "new": str(n), "kind": "baseline"} for s, n in added.items()]
     if changes:
         log = pd.read_csv(CHANGES, dtype=str, keep_default_na=False) if CHANGES.exists() \
             else pd.DataFrame(columns=CHANGE_COLS)
