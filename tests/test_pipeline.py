@@ -126,9 +126,11 @@ def routes(stage: int):
         "property-sales-statistics": page.encode(),
         "median-house-march-quarter-2026.xls": quarterly_xls(qs, 25_000 if stage == 2 else 0),
         "houses-by-suburb-2015-2025.xlsx": annual_xlsx(),
+        # the live F1 also has "Change in the Cash Rate Target"; placed first here so the exclude is tested
         "f1-data.csv": rba_csv("F1 INTEREST RATES AND YIELDS - MONEY MARKET - DAILY",
-                               [("Cash Rate Target", "Original", "FIRMMCRTD"), ("Interbank Overnight Cash Rate", "Original", "FIRMMCRID")],
-                               days, lambda j, i: cash(days[i]) + j * 0.01),
+                               [("Change in the Cash Rate Target", "Original", "FIRMMCCRT"),
+                                ("Cash Rate Target", "Original", "FIRMMCRTD"), ("Interbank Overnight Cash Rate", "Original", "FIRMMCRID")],
+                               days, lambda j, i: 0.0 if j == 0 else cash(days[i]) + (j - 1) * 0.01),
         "f6-data.csv": rba_csv("F6 HOUSING LENDING RATES", [
             ("Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; Large institutions", "Original", "FLRHOFVL"),
             ("Lending rates; Housing credit; New loans funded in the month; Owner-occupied; Variable-rate; All institutions", "Original", "FLRHOFVA"),

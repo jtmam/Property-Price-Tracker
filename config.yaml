@@ -54,6 +54,7 @@ sources:
         label: RBA cash rate target
         table: f1                    # daily table, so a rate decision shows up the next morning
         include: ["cash rate target"]
+        exclude: ["change"]          # F1 also has "Change in the Cash Rate Target"
         monthly_from_daily: true     # keep the last value of each month
         units: "%"
       - id: mortgage_rate_all

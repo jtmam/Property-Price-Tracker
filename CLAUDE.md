@@ -24,6 +24,7 @@ Claude only interprets it.
 
 ```
 python -m pip install -r requirements.txt
+python -m pip install xlwt         # test-only: writes the .xls fixtures
 python tests/test_pipeline.py      # offline end-to-end test; run before every push
 python collect.py                  # live pull from every source (writes data/ and .watch_failed)
 python build_dashboard.py          # rebuild docs/index.html and dashboard/artifact.html from data/
